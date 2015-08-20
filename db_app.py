@@ -1,32 +1,43 @@
 # import os
 # bdir = "E:\\Git\\TagsStats"
+import logging
 
 
 def download_db():
     import urllib.request as urllib
     import os
+    logger = logging.getLogger("tagStats.download_db")
 
     url = "http://taginfo.openstreetmap.org/download/taginfo-db.db.bz2"
     path = "db\\taginfo-db.db.bz2"
+    logger.info("Download started @{0} to {1}".format(url, path))
     urllib.urlretrieve(url, path)
-
+    logger.info("Extracting started")
     os.system("7z x {fname} -odb\\".format(fname=path))
+    logger.info("Deleting file...")
     os.remove(path)
+    logger.info("Download completed!")
 
 
 def create_db(name, cursor, typ="KEY"):
-    # note: c must be cursor
+    # note: c must be cursor,
+    logger = logging.getLogger("tagStats.create_db")
     try:
         base = '''CREATE TABLE "{0}" (alles INTEGER, nodes INTEGER, ways INTEGER, relations INTEGER, used_by INTEGER, data INTEGER)'''
         vals = '''CREATE TABLE "{0}" (value TEXT, alles INTEGER, nodes INTEGER, ways INTEGER, relations INTEGER, data INTEGER)'''
 
         if typ == "KEY":
+            logger.debug(
+                "Trying to create db key entry using @{0}".format(base.format(name)))
             cursor.execute(base.format(name))
         elif typ == "VAL":
+            logger.debug(
+                "Trying to create db value entry using @{0}".format(vals.format(name)))
             cursor.execute(vals.format(name))
     except:
-        print("NAME BŁAAAAAAAAAAAAAAĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄAAD!....**$$#@@")
-        print(name)
+        logger.error("Error by using tag @{0}".format(name))
+        print(
+            "NAME BŁAAAAAAAAAAAAAAĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄAAD!....**$$#@@ WHEN {0}".format(name))
 
 
 def nname():
@@ -41,8 +52,10 @@ def nname():
 
 
 def is_table(name, cursor):
+    logger = logging.getLogger("tagStats.is_table")
     # note: c must be cursor
     find_anfrage = '''SELECT name FROM sqlite_master WHERE type='table' AND name="{0}"'''
+    logger.debug("Checking or {0} exists".format(name))
     isit = cursor.execute(find_anfrage.format(name)).fetchall()
     if isit != []:
         return True
@@ -54,6 +67,8 @@ names = []  # fake,true
 
 def change_name(name):
     import re
+    logger = logging.getLogger("tagStats.change_name")
+
     tag_name = ""
     if (":" or "-") in name or name[0].isnumeric():
         nlist = re.split('\W+', name)
@@ -69,8 +84,10 @@ def change_name(name):
 
         names.append((tag_name, name))
         # print(tag_name)
+        logger.debug("Name {0} changed to {1}".format(name, tag_name))
         return tag_name
     else:
+        logger.debug("Name {0} not changed".format(name))
         return name
 
 
@@ -82,6 +99,7 @@ import_data = []
 
 def make_names_table():
     import sqlite3 as sql
+    logger = logging.getLogger("tagStats.make_names_table")
 
     connection = sql.connect("db\\tagstats.db")
     c = connection.cursor()
@@ -90,6 +108,7 @@ def make_names_table():
         # print(i)
         # print(i[0])
         # print(find_anfrage.format(i[0]))
+        logger.debug("Running command {0}".format(find_anfrage.format(i[0])))
         found = c.execute(find_anfrage.format(i[0])).fetchall()
         if found == []:
             add_data = '''INSERT INTO _tag_names VALUES {0}'''
@@ -98,14 +117,16 @@ def make_names_table():
             else:
                 i_n = (i[0], i[1], 0)
             c.execute(add_data.format(i_n))
+            logger.debug("{0} added to name index".format(i[0]))
 
     connection.commit()
     connection.close()
-    print("Name index updated.")
+    logger.info("Name index updated")
 
 
 def find_all():
     import sqlite3 as sql
+    logger = logging.getLogger("tagStats.find_all")
 
     connection = sql.connect("db\\taginfo-db.db")
     c = connection.cursor()
@@ -116,7 +137,7 @@ def find_all():
     for i in all_mkeys:
         all_keys.append(i[0])
 
-    print("Tag index created.")
+    logger.info("Tag index created")
 
 keys_filter = ["key", "turn", "direction", "owner", "minspeed", "collection_times", "levels", "garmin_type", "step_count", "min_height", "circumfere", "is_instate_code", "to", "from", "distance", "circumference", "comment",
                "divipola", "ntd_id", "hombre", "cmt", "tot_viv", "ponderado", "vulnerab_r", "mujer", "protect_class", "protection_title", "acres", "project", "official_status", "email", "nycdoittbin", "traffic_sign", "gauge", "frequency", "network", "surveydate", "est_width", "est_height", "est", "width", "height", "length", "incline", "fixme", "todo", "TODO", "FIXME", "website", "url", "uri", "voltage", "description", "inscription", "phone", "opening_hours", "postal_code"]
@@ -125,24 +146,26 @@ import_filter = ["created_by", "extensions", "attribution",
 
 
 def sort():
+    logger = logging.getLogger("tagStats.sort")
     for i in all_keys:
         if i.startswith("_") or i.endswith("_") or i.startswith("iemv") or i.startswith("converted_by") or i.startswith("cesena:") or i.startswith("teryt") or i.startswith("gns:") or i.startswith("USGS-LULC:") or i.startswith("unocha:") or i.startswith("gtfs:") or i.startswith("gvr:") or i.startswith("sby:") or i.startswith("rednap:") or i.startswith("maaamet:") or i.startswith("paloalto_ca:") or i.startswith("us.fo:") or i.startswith("geobase:") or i.startswith("kvl_hro:") or i.startswith("okato:") or i.startswith("siruta:") or i.startswith("idp:") or i.startswith("redwood_city_ca:") or i.startswith("metcouncil:") or i.startswith("cxx:") or i.startswith("nvdb:") or i.startswith("fdot:") or i.startswith("catmp-RoadID") or i.startswith("ts_") or i.startswith("nga:") or i.startswith("IBGE:") or i.startswith("bbg:") or i.startswith("4C:") or i.startswith("opendata:") or i.startswith("mhs:") or i.startswith("strassen-nrw:") or i.startswith("qroti:") or i.startswith("vrr:") or i.startswith("cadastre:") or i.startswith("emuia:") or i.startswith("no-kartverket-ssr:") or i.startswith("catastro:") or i.startswith("nist:") or i.startswith("eea:") or i.startswith("gps:") or i.startswith("pre-CLC:") or i.startswith("pe:") or i.startswith("fi:") or i.startswith("OGD-Stmk:") or i.startswith("oa:") or i.startswith("NYSTL:") or i.startswith("educamadrid:") or i.startswith("brt:") or i.startswith("usar_addr:") or i.startswith("dibavod:") or i.startswith("massgis:") or i.startswith("NHD:") or i.startswith("dcgis:") or i.startswith("raba:") or i.startswith("adr_les") or i.startswith("bag:") or i.startswith("cladr:") or i.startswith("bmo:") or i.startswith("surrey:") or i.startswith("rer_edi_id:") or i.startswith("ewmapa:") or i.startswith("uuid:") or i.startswith("mml:") or i.startswith("kms:") or i.startswith("lbcs:") or i.startswith("dcgis:") or i.startswith("clc:") or i.startswith("nhd-shp:") or i.startswith("tiger:") or i.startswith("mvdgis:") or i.startswith("osak:") or i.startswith("nhd:") or i.startswith("gnis:") or i.startswith("it:") or i.startswith("lojic:") or i.startswith("gst:") or i.startswith("ngbe:"):
             import_data.append(i)
         elif i in import_filter:
             import_data.append(i)
-        elif i.startswith("turn:lanes") or i.startswith("placement") or i.startswith("overtaking") or i.startswith("ncat") or i.startswith("object:") or i.startswith("change") or i.startswith("chile") or i.startswith("capacity") or i.startswith("ref") or i.startswith("accuracy") or i.startswith("taxon") or i.startswith("genus") or i.startswith("species") or i.startswith("is_in") or i.startswith("title") i.endswith("title") or i.startswith("zip") or i.startswith("retrieved") or i.startswith("diameter") or i.endswith("survey") or i.startswith("survey") or i.startswith("population") or i.endswith("simc") or i.endswith("date") or i.startswith("operator") or i.endswith("operator") or i.startswith("import") or i.endswith("ref") or i.startswith("note") or i.startswith("addr") or i.startswith("contact") or i.startswith("wikipedia") or i.startswith("ele") or i.endswith(":lanes") or i.startswith("lanes") or i.startswith("roof:") or i.startswith("building:") or i.startswith("source") or i.startswith("max") or i.endswith("name") or i.startswith("name"):
+        elif i.startswith("turn:lanes") or i.startswith("placement") or i.startswith("overtaking") or i.startswith("ncat") or i.startswith("object:") or i.startswith("change") or i.startswith("chile") or i.startswith("capacity") or i.startswith("ref") or i.startswith("accuracy") or i.startswith("taxon") or i.startswith("genus") or i.startswith("species") or i.startswith("is_in") or i.startswith("title") or i.endswith("title") or i.startswith("zip") or i.startswith("retrieved") or i.startswith("diameter") or i.endswith("survey") or i.startswith("survey") or i.startswith("population") or i.endswith("simc") or i.endswith("date") or i.startswith("operator") or i.endswith("operator") or i.startswith("import") or i.endswith("ref") or i.startswith("note") or i.startswith("addr") or i.startswith("contact") or i.startswith("wikipedia") or i.startswith("ele") or i.endswith(":lanes") or i.startswith("lanes") or i.startswith("roof:") or i.startswith("building:") or i.startswith("source") or i.startswith("max") or i.endswith("name") or i.startswith("name"):
             key_only.append(i)
         elif i in keys_filter:
             key_only.append(i)
         else:
             key_dont.append(i)
 
-    print("Tag index sorted.")
+    logger.info("Tag index sorted")
 
 
 def update_datasets(tag_name, apply_values=False, values_limit=500):
     from time import localtime, strftime
     import sqlite3 as sql
+    logger = logging.getLogger("tagStats.update_datasets")
 
     ####TAGINFO DB####
     connection = sql.connect("db\\taginfo-db.db")
@@ -150,11 +173,12 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
 
     keys_anfrage = '''SELECT count_all,count_nodes,count_ways,count_relations,users_all FROM keys WHERE key="{0}"'''
     values_anfrage = '''SELECT value,count_all,count_nodes,count_ways,count_relations FROM tags WHERE (key="{0}" AND count_all>{1}) ORDER BY count_all DESC'''
-    # print(keys_anfrage.format(tag_name))
+    logger.debug(keys_anfrage.format(tag_name))
     tag_key = c.execute(
         keys_anfrage.format(tag_name)).fetchall()  # list of tuples
 
     if apply_values == True:
+        logger.debug(values_anfrage.format(tag_name, str(values_limit)))
         tag_val = c.execute(
             values_anfrage.format(tag_name, str(values_limit))).fetchall()  # list of tuples
 
@@ -167,10 +191,12 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
     c = n_connection.cursor()
 
     if tag_key == []:
+        logger.error("Error by using tag {0}".format(tag_name))
         print("NIEOCZEKIWANY BŁĄD WYKONANIA....PRZY TAGU {0}".format(tag_name))
         return None
     else:
-        timek = int(strftime("%Y%m%d", localtime()))
+        # timek = int(strftime("%Y%m%d", localtime()))
+        timek = 20150819
         new_key = list(tag_key[0])
         new_key.append(timek)
 
@@ -180,9 +206,9 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
         pass
 
     add_data = '''INSERT INTO "{0}" VALUES {1}'''
-    # print(add_data.format(tag_name, tuple(new_key)))
+    logger.debug(add_data.format(tag_name, tuple(new_key)))
     c.execute(add_data.format(tag_name, tuple(new_key)))
-    print("Updated {0} KEY record".format(tag_name))
+    logger.info("Updated ===== {0} ===== KEY record".format(tag_name))
 
     n_connection.commit()
     n_connection.close()
@@ -202,15 +228,17 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
                 val_list.append(timek)
                 val_tuple = tuple(val_list)
 
-                # print(add_data.format(tag_name, val_tuple))
+                logger.debug(add_data.format(tag_name, val_tuple))
                 c.execute(add_data.format(tag_name, val_tuple))
-                print("Updated {0} VALUE record".format(val))
+                logger.info("Updated {0} VALUE record".format(val))
 
             v_connection.commit()
             v_connection.close()
     except:
-        print("BŁĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄAD!......$$##^^&&")
-        print(tag_name)
+        logger.error(
+            "Error by using tag {0} by value {1}".format(tag_name, val))
+        print("BŁĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄĄAD!......$$##^^&& WHEN {0}".format(
+            tag_name))
 
         # stwurz i tub update_datasets
 
@@ -225,6 +253,16 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
 
 
 def main_db():
+    logger = logging.getLogger("tagStats")
+    logger.setLevel(logging.INFO)
+
+    fh = logging.FileHandler("tagstats.log", 'w', 'utf-8', False)
+    form = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    fh.setFormatter(form)
+
+    logger.addHandler(fh)
+    logger.info("TagStats v.0.9 -- Javnik -- data from TagInfo")
     find_all()
     sort()
     # nname()
@@ -245,6 +283,9 @@ def main_db():
             update_datasets(i, True)
     print("Value datasets updated.")
     make_names_table()
+
+    logger.info("End of execution.")
+    logger.info("----------------------------------------------------")
 
 
 def make_graphs(tag_name, values=False):
