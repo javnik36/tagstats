@@ -195,8 +195,8 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
         print("NIEOCZEKIWANY BŁĄD WYKONANIA....PRZY TAGU {0}".format(tag_name))
         return None
     else:
-        # timek = int(strftime("%Y%m%d", localtime()))
-        timek = 20150819
+        timek = int(strftime("%Y%m%d", localtime()))
+        # timek = 20150819
         new_key = list(tag_key[0])
         new_key.append(timek)
 
@@ -263,6 +263,7 @@ def main_db():
 
     logger.addHandler(fh)
     logger.info("TagStats v.0.9 -- Javnik -- data from TagInfo")
+    download_db()
     find_all()
     sort()
     # nname()
@@ -286,72 +287,3 @@ def main_db():
 
     logger.info("End of execution.")
     logger.info("----------------------------------------------------")
-
-
-def make_graphs(tag_name, values=False):
-    import sqlite3 as sql
-    import pylab as p
-
-    tag_name = change_name(tag_name)
-
-    connection = sql.connect("db\\tagstats.db")
-    c = connection.cursor()
-
-    base = '''SELECT alles,nodes,ways,relations,used_by,data FROM {0} ORDER BY data ASC'''
-    vals = '''SELECT value,alles,nodes,ways,relations,data FROM {0} ORDER BY data ASC'''
-
-    key_db = c.execute(base.format(tag_name)).fetchall()
-    # list of tuple [(1,2,3), (1,2,3) ]
-    alles = []
-    n = []
-    w = []
-    r = []
-    u = []
-    d = []
-
-    for i in key_db:
-        alles.append(i[0])
-        n.append(i[1])
-        w.append(i[2])
-        r.append(i[3])
-        u.append(i[4])
-        d.append(i[5])
-
-    p.figure(figsize=(10, 10), dpi=200)
-    p.plot(d, alles, color="blue", label="all")
-    p.plot(d, n, color="red", label="node")
-    p.plot(d, w, color="green", label="way")
-    p.plot(d, r, color="orange", label="relation")
-    p.plot(d, r, color="black", label="used_by")
-    # p.ylim(100, 50000)
-    p.legend(loc="upper left")
-    p.show()
-
-    if values == True:
-        tag_v = tag_name + "_values"
-        val_db = c.execute(vals.format(tag_v)).fetchall()
-        v = []
-        alles.clear()
-        n.clear()
-        w.clear()
-        r.clear()
-        d.clear()
-
-        # NOT SO EASY!
-        for i in val_db:
-            v.append(i[0])
-            alles.append(i[1])
-            n.append(i[2])
-            w.append(i[3])
-            r.append(i[4])
-            d.append(i[5])
-
-            p.figure(figsize=(10, 10), dpi=200)
-            p.title("value")
-            p.plot(d, alles, color="blue", label="all")
-            p.plot(d, n, color="red", label="node")
-            p.plot(d, w, color="green", label="way")
-            p.plot(d, r, color="orange", label="relation")
-            # p.ylim(100, 50000)
-            p.legend(loc="upper left")
-            p.show()
