@@ -39,6 +39,16 @@ def check_db():
         return True
 
 
+def update_info(last_ti, ts_start, ts_end):
+    import sqlite3 as sql
+    connection = sql.connect("db\\tagstats.db")
+    c = connection.cursor()
+    c.execute('''UPDATE _db_info SET taginfo_last="{0}",update_start="{1}",update_end="{2}" WHERE name="tagstats_db"'''.format(
+        last_ti, ts_start, ts_end))
+    connection.commit()
+    connection.close()
+
+
 def download_db():
     import urllib.request as urllib
     import os
@@ -304,6 +314,7 @@ def main_db():
 
     logger.addHandler(fh)
     logger.info("TagStats v.0.9 -- Javnik -- data from TagInfo")
+    st_date = strftime("%Y-%m-%d %H:%M:%S", localtime())
     download_db()
     c = check_db()
     if c == True:
@@ -325,8 +336,11 @@ def main_db():
                 update_datasets(i, True)
         print("Value datasets updated.")
         make_names_table()
+
     logger.info("Deleting taginfo-db...")
     delete()
+    end_date = strftime("%Y-%m-%d %H:%M:%S", localtime())
+    update_info(last_taginfo, st_date, end_date)
 
     logger.info("End of execution.")
     logger.info("----------------------------------------------------")

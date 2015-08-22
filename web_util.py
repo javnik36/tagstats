@@ -138,9 +138,12 @@ def make_tag_html(tag_name, values=False):
     path = 'E:\\Git\\TagsStats\\templates\\tag_template.html'
     f = open(path, 'r').read()
 
-    envi = j2.Environment().from_string(f)
-    made_templ = envi.render({'tag_name': content[0], 'is_val_index': content[
-                             1], 'graph': content[2], 'values': content[3]})
+    pl = j2.PackageLoader("web_util", 'templates')
+    envi = j2.Environment(loader=pl)
+    template = envi.get_template("tag_template.html")
+
+    made_templ = template.render({'tag_name': content[0], 'is_val_index': content[
+        1], 'graph': content[2], 'values': content[3]})
 
     with open("SUPTEST.html", 'w', encoding='utf-8') as h:
         h.write(made_templ)
