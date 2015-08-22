@@ -2,6 +2,42 @@
 # bdir = "E:\\Git\\TagsStats"
 import logging
 
+last_taginfo = ''
+
+
+def check_db():
+    import sqlite3 as sql
+    from datetime import date
+
+    logger = logging.getLogger("tagStats.chack_db")
+    logger.info("Checking if new db")
+    connection = sql.connect("db\\taginfo-db.db")
+    c = connection.cursor()
+    check_sql = '''SELECT update_end FROM source'''
+    sql_data = c.execute(check_sql).fetchone()
+    sql_date = sql_data[0][:10].split('-')
+    logger.debug(sql_date)
+    s_date = date(int(sql_date[0]), int(sql_date[1]), int(sql_date[2]))
+    connection.close()
+
+    # _db_info: name;taginfo_last;update_start;update_end
+    connection = sql.connect("db\\tagstats.db")
+    c = connection.cursor()
+    check_db = '''SELECT taginfo_last FROM _db_info'''
+    db_data = c.execute(check_db).fetchone()
+    db_date = db_data[0][:10].split('-')
+    logger.debug(db_date)
+    d_date = date(int(db_date[0]), int(db_date[1]), int(db_date[2]))
+    connection.close()
+
+    if s_date == d_date:
+        logger.info("Old db found! Exiting...")
+        return False
+    else:
+        last_taginfo = sql_data[0]
+        logger.info("New db found!")
+        return True
+
 
 def download_db():
     import urllib.request as urllib
@@ -17,6 +53,11 @@ def download_db():
     logger.info("Deleting file...")
     os.remove(path)
     logger.info("Download completed!")
+
+
+def delete():
+    import os
+    os.remove("db\\taginfo-db.db")
 
 
 def create_db(name, cursor, typ="KEY"):
@@ -152,7 +193,7 @@ def sort():
             import_data.append(i)
         elif i in import_filter:
             import_data.append(i)
-        elif i.startswith("turn:lanes") or i.startswith("placement") or i.startswith("overtaking") or i.startswith("ncat") or i.startswith("object:") or i.startswith("change") or i.startswith("chile") or i.startswith("capacity") or i.startswith("ref") or i.startswith("accuracy") or i.startswith("taxon") or i.startswith("genus") or i.startswith("species") or i.startswith("is_in") or i.startswith("title") or i.endswith("title") or i.startswith("zip") or i.startswith("retrieved") or i.startswith("diameter") or i.endswith("survey") or i.startswith("survey") or i.startswith("population") or i.endswith("simc") or i.endswith("date") or i.startswith("operator") or i.endswith("operator") or i.startswith("import") or i.endswith("ref") or i.startswith("note") or i.startswith("addr") or i.startswith("contact") or i.startswith("wikipedia") or i.startswith("ele") or i.endswith(":lanes") or i.startswith("lanes") or i.startswith("roof:") or i.startswith("building:") or i.startswith("source") or i.startswith("max") or i.endswith("name") or i.startswith("name"):
+        elif i.startswith("turn:lanes") or i.endswith("count") or i.startswith("placement") or i.startswith("overtaking") or i.startswith("ncat") or i.startswith("object:") or i.startswith("change") or i.startswith("chile") or i.startswith("capacity") or i.startswith("ref") or i.startswith("accuracy") or i.startswith("taxon") or i.startswith("genus") or i.startswith("species") or i.startswith("is_in") or i.startswith("title") or i.endswith("title") or i.startswith("zip") or i.startswith("retrieved") or i.startswith("diameter") or i.endswith("survey") or i.startswith("survey") or i.startswith("population") or i.endswith("simc") or i.endswith("date") or i.startswith("operator") or i.endswith("operator") or i.startswith("import") or i.endswith("ref") or i.startswith("note") or i.startswith("addr") or i.startswith("contact") or i.startswith("wikipedia") or i.startswith("ele") or i.endswith(":lanes") or i.startswith("lanes") or i.startswith("roof:") or i.startswith("building:") or i.startswith("source") or i.startswith("max") or i.endswith("name") or i.startswith("name"):
             key_only.append(i)
         elif i in keys_filter:
             key_only.append(i)
@@ -264,26 +305,28 @@ def main_db():
     logger.addHandler(fh)
     logger.info("TagStats v.0.9 -- Javnik -- data from TagInfo")
     download_db()
-    find_all()
-    sort()
-    # nname()
+    c = check_db()
+    if c == True:
+        find_all()
+        sort()
+        # nname()
 
-    for i in key_only:
-        # print(i)
-        if i in ["to", "from"]:  # work at it
-            pass
-        else:
-            update_datasets(i)
+        for i in key_only:
+            if i in ["to", "from"]:  # work at it
+                pass
+            else:
+                update_datasets(i)
 
-    print("Key_only datasets updated.")
-    for i in key_dont:
-        # print(i)
-        if i == "area:highway":
-            update_datasets(i, True, 50)
-        else:
-            update_datasets(i, True)
-    print("Value datasets updated.")
-    make_names_table()
+        print("Key_only datasets updated.")
+        for i in key_dont:
+            if i == "area:highway":
+                update_datasets(i, True, 50)
+            else:
+                update_datasets(i, True)
+        print("Value datasets updated.")
+        make_names_table()
+    logger.info("Deleting taginfo-db...")
+    delete()
 
     logger.info("End of execution.")
     logger.info("----------------------------------------------------")
