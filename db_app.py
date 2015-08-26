@@ -2,14 +2,14 @@
 # bdir = "E:\\Git\\TagsStats"
 import logging
 
-last_taginfo = ''
+last_taginfo = []
 
 
 def check_db():
     import sqlite3 as sql
     from datetime import date
 
-    logger = logging.getLogger("tagStats.chack_db")
+    logger = logging.getLogger("tagStats.check_db")
     logger.info("Checking if new db")
     connection = sql.connect("db\\taginfo-db.db")
     c = connection.cursor()
@@ -34,13 +34,17 @@ def check_db():
         logger.info("Old db found! Exiting...")
         return False
     else:
-        last_taginfo = sql_data[0]
+        last_taginfo.append(sql_data[0])
+        logger.debug(sql_data[0])
         logger.info("New db found!")
         return True
 
 
 def update_info(last_ti, ts_start, ts_end):
     import sqlite3 as sql
+    logger = logging.getLogger("tagStats.update_info")
+    logger.info(
+        "Updating with: {0}, {1}, {2}".format(last_ti, ts_start, ts_end))
     connection = sql.connect("db\\tagstats.db")
     c = connection.cursor()
     c.execute('''UPDATE _db_info SET taginfo_last="{0}",update_start="{1}",update_end="{2}" WHERE name="tagstats_db"'''.format(
@@ -304,6 +308,7 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
 
 
 def main_db():
+    from time import localtime, strftime
     logger = logging.getLogger("tagStats")
     logger.setLevel(logging.INFO)
 
@@ -340,7 +345,7 @@ def main_db():
     logger.info("Deleting taginfo-db...")
     delete()
     end_date = strftime("%Y-%m-%d %H:%M:%S", localtime())
-    update_info(last_taginfo, st_date, end_date)
+    update_info(last_taginfo[0], st_date, end_date)
 
     logger.info("End of execution.")
     logger.info("----------------------------------------------------")
