@@ -1,6 +1,7 @@
 # import os
 # bdir = "E:\\Git\\TagsStats"
 import logging
+from web_util import *
 
 last_taginfo = []
 
@@ -332,18 +333,22 @@ def main_db():
                 pass
             else:
                 update_datasets(i)
+                make_tag_html(i, False)
 
         print("Key_only datasets updated.")
         for i in key_dont:
             if i == "area:highway":
                 update_datasets(i, True, 50)
+                make_tag_html(i, True)
             else:
                 update_datasets(i, True)
+                make_tag_html(i, True)
         print("Value datasets updated.")
         make_names_table()
 
     logger.info("Deleting taginfo-db...")
     delete()
+    make_tags_list_html()
     end_date = strftime("%Y-%m-%d %H:%M:%S", localtime())
     update_info(last_taginfo[0], st_date, end_date)
 
