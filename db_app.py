@@ -74,6 +74,8 @@ def delete():
     import os
     os.remove("db\\taginfo-db.db")
 
+# redundant
+
 
 def create_db(name, cursor, typ="KEY"):
     # note: c must be cursor,
@@ -105,6 +107,8 @@ def nname():
         '''CREATE TABLE _tag_names (fake_name TEXT, true_name TEXT, value_index INTEGER)''')
     connection.commit()
     connection.close()
+
+# redundant
 
 
 def is_table(name, cursor):
@@ -151,6 +155,8 @@ all_keys = []
 key_only = []
 key_dont = []
 import_data = []
+
+# redundant
 
 
 def make_names_table():
@@ -227,7 +233,7 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
     connection = sql.connect("db\\taginfo-db.db")
     c = connection.cursor()
 
-    keys_anfrage = '''SELECT count_all,count_nodes,count_ways,count_relations,users_all FROM keys WHERE key="{0}"'''
+    keys_anfrage = '''SELECT key,count_all,count_nodes,count_ways,count_relations,users_all FROM keys WHERE key="{0}"'''
     values_anfrage = '''SELECT value,count_all,count_nodes,count_ways,count_relations FROM tags WHERE (key="{0}" AND count_all>{1}) ORDER BY count_all DESC'''
     logger.debug(keys_anfrage.format(tag_name))
     tag_key = c.execute(
@@ -240,7 +246,7 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
 
     connection.close()
 
-    tag_name = change_name(tag_name)
+    #tag_name = change_name(tag_name)
 
     ####MY DB####
     n_connection = sql.connect("db\\tagstats.db")
@@ -256,14 +262,15 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
         new_key = list(tag_key[0])
         new_key.append(timek)
 
-    if is_table(tag_name, c) == False:
-        create_db(tag_name, c)
-    else:
-        pass
+    # redundant
+    # if is_table(tag_name, c) == False:
+    #     create_db(tag_name, c)
+    # else:
+    #     pass
 
-    add_data = '''INSERT INTO "{0}" VALUES {1}'''
-    logger.debug(add_data.format(tag_name, tuple(new_key)))
-    c.execute(add_data.format(tag_name, tuple(new_key)))
+    add_data = '''INSERT INTO "keys" VALUES {1}'''
+    logger.debug(add_data.format(tuple(new_key)))
+    c.execute(add_data.format(tuple(new_key)))
     logger.info("Updated ===== {0} ===== KEY record".format(tag_name))
 
     n_connection.commit()
