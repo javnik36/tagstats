@@ -234,7 +234,7 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
     c = connection.cursor()
 
     keys_anfrage = '''SELECT key,count_all,count_nodes,count_ways,count_relations,users_all FROM keys WHERE key="{0}"'''
-    values_anfrage = '''SELECT value,count_all,count_nodes,count_ways,count_relations FROM tags WHERE (key="{0}" AND count_all>{1}) ORDER BY count_all DESC'''
+    values_anfrage = '''SELECT key,value,count_all,count_nodes,count_ways,count_relations FROM tags WHERE (key="{0}" AND count_all>{1}) ORDER BY count_all DESC'''
     logger.debug(keys_anfrage.format(tag_name))
     tag_key = c.execute(
         keys_anfrage.format(tag_name)).fetchall()  # list of tuples
@@ -268,9 +268,9 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
     # else:
     #     pass
 
-    add_data = '''INSERT INTO "keys" VALUES {1}'''
-    logger.debug(add_data.format(tuple(new_key)))
-    c.execute(add_data.format(tuple(new_key)))
+    add_data = '''INSERT INTO {0} VALUES {1}'''
+    logger.debug(add_data.format("keys", tuple(new_key)))
+    c.execute(add_data.format("keys", tuple(new_key)))
     logger.info("Updated ===== {0} ===== KEY record".format(tag_name))
 
     n_connection.commit()
@@ -280,19 +280,14 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
             v_connection = sql.connect("db\\tagstats_values.db")
             c = v_connection.cursor()
 
-            if is_table(tag_name, c) == False:
-                create_db(tag_name, c, "VAL")
-            else:
-                pass
-
             for i in tag_val:
                 val_list = list(i)
                 val = val_list[0]
                 val_list.append(timek)
                 val_tuple = tuple(val_list)
 
-                logger.debug(add_data.format(tag_name, val_tuple))
-                c.execute(add_data.format(tag_name, val_tuple))
+                logger.debug(add_data.format("values", val_tuple))
+                c.execute(add_data.format("values", val_tuple))
                 logger.info("Updated {0} VALUE record".format(val))
 
             v_connection.commit()
