@@ -1,7 +1,9 @@
-# import os
-# bdir = "E:\\Git\\TagsStats"
 import logging
 from web_util import *
+
+__KEYS_DB__ = "db\\tagstats.db"
+__VALUES_DB__ = "db\\tagstats_values.db"
+__TAGINFO_DB__ = "db\\taginfo-db.db"
 
 last_taginfo = []
 
@@ -12,7 +14,7 @@ def check_db():
 
     logger = logging.getLogger("tagStats.check_db")
     logger.info("Checking if new db")
-    connection = sql.connect("db\\taginfo-db.db")
+    connection = sql.connect(__TAGINFO_DB__)
     c = connection.cursor()
     check_sql = '''SELECT update_end FROM source'''
     sql_data = c.execute(check_sql).fetchone()
@@ -22,7 +24,7 @@ def check_db():
     connection.close()
 
     # _db_info: name;taginfo_last;update_start;update_end
-    connection = sql.connect("db\\tagstats.db")
+    connection = sql.connect(__KEYS_DB__)
     c = connection.cursor()
     check_db = '''SELECT taginfo_last FROM _db_info'''
     db_data = c.execute(check_db).fetchone()
@@ -46,7 +48,7 @@ def update_info(last_ti, ts_start, ts_end):
     logger = logging.getLogger("tagStats.update_info")
     logger.info(
         "Updating with: {0}, {1}, {2}".format(last_ti, ts_start, ts_end))
-    connection = sql.connect("db\\tagstats.db")
+    connection = sql.connect(__KEYS_DB__)
     c = connection.cursor()
     c.execute('''UPDATE _db_info SET taginfo_last="{0}",update_start="{1}",update_end="{2}" WHERE name="tagstats_db"'''.format(
         last_ti, ts_start, ts_end))
@@ -72,7 +74,7 @@ def download_db():
 
 def delete():
     import os
-    os.remove("db\\taginfo-db.db")
+    os.remove(__TAGINFO_DB__)
 
 
 def create_db(name, cursor, typ="KEY"):
@@ -98,7 +100,7 @@ def create_db(name, cursor, typ="KEY"):
 
 def nname():
     import sqlite3 as sql
-    connection = sql.connect("db\\tagstats.db")
+    connection = sql.connect(__KEYS_DB__)
     c = connection.cursor()
     create_db("name", c)
     c.execute(
@@ -157,7 +159,7 @@ def make_names_table():
     import sqlite3 as sql
     logger = logging.getLogger("tagStats.make_names_table")
 
-    connection = sql.connect("db\\tagstats.db")
+    connection = sql.connect(__KEYS_DB__)
     c = connection.cursor()
     find_anfrage = '''SELECT true_name FROM _tag_names WHERE fake_name="{0}"'''
     for i in names:
@@ -184,7 +186,7 @@ def find_all():
     import sqlite3 as sql
     logger = logging.getLogger("tagStats.find_all")
 
-    connection = sql.connect("db\\taginfo-db.db")
+    connection = sql.connect(__TAGINFO_DB__)
     c = connection.cursor()
 
     fkeys = '''SELECT key FROM keys WHERE (count_all>=1000 AND NOT characters="letters") ORDER BY count_all DESC'''
@@ -224,7 +226,7 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
     logger = logging.getLogger("tagStats.update_datasets")
 
     ####TAGINFO DB####
-    connection = sql.connect("db\\taginfo-db.db")
+    connection = sql.connect(__TAGINFO_DB__)
     c = connection.cursor()
 
     keys_anfrage = '''SELECT count_all,count_nodes,count_ways,count_relations,users_all FROM keys WHERE key="{0}"'''
@@ -243,7 +245,7 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
     tag_name = change_name(tag_name)
 
     ####MY DB####
-    n_connection = sql.connect("db\\tagstats.db")
+    n_connection = sql.connect(__KEYS_DB__)
     c = n_connection.cursor()
 
     if tag_key == []:
@@ -270,7 +272,7 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
     n_connection.close()
     try:
         if apply_values == True:
-            v_connection = sql.connect("db\\tagstats_values.db")
+            v_connection = sql.connect(__VALUES_DB__)
             c = v_connection.cursor()
 
             if is_table(tag_name, c) == False:
