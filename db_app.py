@@ -317,7 +317,7 @@ def main_db():
 
     log_date = strftime("%d%m", localtime())
     fh = logging.FileHandler(
-        "tagstats{0}.log".format(log_date), 'w', 'utf-8', False)
+        "logs\\tagstats{0}.log".format(log_date), 'w', 'utf-8', False)
     form = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     fh.setFormatter(form)
