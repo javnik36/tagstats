@@ -249,7 +249,7 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
     #tag_name = change_name(tag_name)
 
     ####MY DB####
-    n_connection = sql.connect("db\\tagstats.db")
+    n_connection = sql.connect("db\\dev\\tagstats1.db")
     c = n_connection.cursor()
 
     if tag_key == []:
@@ -268,7 +268,7 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
     # else:
     #     pass
 
-    add_data = '''INSERT INTO {0} VALUES {1}'''
+    add_data = '''INSERT INTO "{0}" VALUES {1}'''
     logger.debug(add_data.format("keys", tuple(new_key)))
     c.execute(add_data.format("keys", tuple(new_key)))
     logger.info("Updated ===== {0} ===== KEY record".format(tag_name))
@@ -277,7 +277,7 @@ def update_datasets(tag_name, apply_values=False, values_limit=500):
     n_connection.close()
     try:
         if apply_values == True:
-            v_connection = sql.connect("db\\tagstats_values.db")
+            v_connection = sql.connect("db\\dev\\tagstats_values1.db")
             c = v_connection.cursor()
 
             for i in tag_val:
@@ -333,28 +333,29 @@ def main_db():
         # nname()
 
         for i in key_only:
-            if i in ["to", "from"]:  # work at it
-                pass
-            else:
-                update_datasets(i)
-                make_tag_html(i, False)
+            # if i in ["to", "from"]:  # work at it
+            #    pass
+            # else:
+            update_datasets(i)
+            # make_tag_html(i, False)
 
         print("Key_only datasets updated.")
         for i in key_dont:
             if i == "area:highway":
                 update_datasets(i, True, 50)
-                make_tag_html(i, True)
+                # make_tag_html(i, True)
             else:
                 update_datasets(i, True)
-                make_tag_html(i, True)
+                # make_tag_html(i, True)
         print("Value datasets updated.")
-        make_names_table()
+        # make_names_table()
 
     logger.info("Deleting taginfo-db...")
     delete()
     make_tags_list_html()
     end_date = strftime("%Y-%m-%d %H:%M:%S", localtime())
     update_info(last_taginfo[0], st_date, end_date)
+    # make_tags_list_html()
 
     logger.info("End of execution.")
     logger.info("----------------------------------------------------")
