@@ -53,8 +53,6 @@ def make_main_graph(feed):
     u = []
     d = []
 
-    value_list = []
-
     for i in feed:
         alles.append(i[0])
         n.append(i[1])
@@ -81,24 +79,30 @@ def make_main_graph(feed):
     return chart.htmlcontent
 
 
-def make_val_graph(feed):
-    connection = sql.connect("db\\tagstats_values.db")
+def make_val_graphs(name, val_list):
+    from datetime import date
+    from nvd3 import lineChart
+    import time
+
+    connection = sql.connect("db/dev/tagstats_values1.db")
     c = connection.cursor()
-    distinct = '''SELECT DISTINCT value FROM "{0}"'''
-    dist_db = c.execute(distinct.format(ch_name)).fetchall()
+    # distinct = '''SELECT DISTINCT "value" FROM "values" WHERE '''
+    # dist_db = c.execute(distinct.format(ch_name)).fetchall()
+    value_content = []
 
-    for i in dist_db:
+    o = 1
+    for i in val_list:
         # clear tables
-        alles.clear()
-        n.clear()
-        w.clear()
-        r.clear()
-        d.clear()
+        alles = []
+        n = []
+        w = []
+        r = []
+        d = []
 
-        vals = '''SELECT alles,nodes,ways,relations,data FROM "{0}" WHERE value="{1}" ORDER BY data ASC'''
+        vals = '''SELECT alles,nodes,ways,relations,data FROM "values" WHERE key="{0}" AND value="{1}" ORDER BY data ASC'''
 
         value_name = i[0]
-        val_db = c.execute(vals.format(ch_name, value_name)).fetchall()
+        val_db = c.execute(vals.format(name, value_name)).fetchall()
 
         for i in val_db:
             alles.append(i[0])
@@ -114,29 +118,32 @@ def make_val_graph(feed):
             d.append(new_d)
 
         # change this shit...it will makes problems with file names
-        chart_name = ch_name + "-" + value_name
+        # chart_name = ch_name + "-" + value_name
+        ch = "Chart_No" + str(o)
 
         chart = lineChart(
-            name=chart_name, height="400", width="800", x_is_date=True, x_axis_format="%d-%m", use_interactive_guideline=True)
+            name=ch, height="400", width="800", x_is_date=True, x_axis_format="%d-%m", use_interactive_guideline=True)
         chart.add_serie(x=d, y=alles, name="All")
         chart.add_serie(x=d, y=n, name="Nodes")
         chart.add_serie(x=d, y=w, name="Ways")
         chart.add_serie(x=d, y=r, name="Relations")
 
-        if tofile == True:
-            out_f = open("{0}.html".format(chart_name), 'w')
-            chart.buildhtml()
-            out_f.write(chart.htmlcontent)
-            out_f.close()
-        else:
-            # val_div = chart.buildcontainer()
-            # val_js = chart.buildjschart()
-            chart.buildcontent()
-            val_data = chart.htmlcontent
-            sm_dict = {"name": value_name, "graph": val_data}
-            value_list.append(sm_dict)
+        # if tofile == True:
+        #     out_f = open("{0}.html".format(chart_name), 'w')
+        #     chart.buildhtml()
+        #     out_f.write(chart.htmlcontent)
+        #     out_f.close()
+        # else:
+        # val_div = chart.buildcontainer()
+        # val_js = chart.buildjschart()
+        chart.buildcontent()
+        val_data = chart.htmlcontent
+        sm_dict = {"name": value_name, "graph": val_data}
+        value_content.append(sm_dict)
+        o += 1
 
     connection.close()
+    return value_content
 
 
 @route('/tags/<tag>')
@@ -153,11 +160,19 @@ def tag_data(tag):
 
     connection = sql.connect('db/dev/tagstats_values1.db')
     c = connection.cursor()
-    val_rows = c.execute('SELECT DISTINCT name FROM "values"').fetchall()
+    val_rows = c.execute(
+        'SELECT DISTINCT value FROM "values" WHERE key="{0}"'.format(tag)).fetchall()
     connection.close()
 
     content = make_main_graph(rowy)
 
-    return {"tag_name": tag, "graph": content, "is_val_index": "False"}
+    if val_rows == []:
+        Vcontent = None
+        vIndex = "false"
+    else:
+        Vcontent = make_val_graphs(tag, val_rows)
+        vIndex = "true"
+
+    return {"tag_name": tag, "graph": content, "is_val_index": vIndex, "values": Vcontent}
 
 run(host='localhost', port=8080, debug=True)  # , reloader=True)
